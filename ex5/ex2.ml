@@ -1,0 +1,74 @@
+open Syntax
+open Type
+open Ex2Parser
+open Ex2Lexer
+
+let interactive env f ty_env =
+  try
+    (* let channel = open_in Sys.argv.(1) in *)
+    print_string "$ "; flush stdout;
+    let lexbuf = Lexing.from_channel stdin in 
+    let result = Ex2Parser.main Ex2Lexer.token lexbuf in
+    let (ty,tyenv) = infer_cmd ty_env result in
+    let (env',value) = command env result in
+    let print_command (env,value,ty,tyenv) =
+      print_type ty; print_string "= ";print_value value; print_newline(); f env tyenv in
+    print_command (env',value,ty,tyenv)
+    
+    (* close_in channel *)
+      
+  with
+    (* | Failure s -> *)
+    (*    print_endline "Failure!"; f env; *)
+    | Parsing.Parse_error -> 
+       print_endline "Parse Error!"; f env ty_env;
+    | Eval_error ->
+       print_endline "Eval Error!"; f env ty_env;
+    | NotFound v ->
+       print_string v; print_endline " is Unbound value!"; f env ty_env;
+    | Division_by_zero ->
+       print_endline "Division_by_zero!"; f env ty_env;
+    | Match_failure ->
+       print_endline "Match Failure!"; f env ty_env;
+      
+;;
+
+let readfile env =
+  try
+    let channel = open_in Sys.argv.(1) in  
+    
+    let lexbuf = Lexing.from_channel channel in 
+    let result = Ex2Parser.main Ex2Lexer.token lexbuf in
+    let print_command (env,value) =
+      print_value value; print_newline(); in
+    print_command (command env result);
+    
+    close_in channel
+      
+  with 
+    | Parsing.Parse_error -> 
+       print_endline "Parse Error!"
+;;
+
+let rec read_print_loop env ty_env =
+  interactive env read_print_loop ty_env;;
+
+
+
+
+let main () =
+  if Array.length Sys.argv > 1
+  then readfile []
+  else read_print_loop [] [];;
+    
+    
+if !Sys.interactive then 
+  ()
+else 
+  main ()    
+
+
+    
+    
+  
+  
