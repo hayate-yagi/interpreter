@@ -87,7 +87,7 @@ let rec ty_unify : ty_constraints -> ty_subst = fun c ->
      ty_unify_tuple c (tlist1,tlist2)
   | (List t1, List t2)::rest -> ty_unify ((t1,t2)::rest)
   | (Var n, t)::rest ->
-      begin
+     begin
        match search_ty_var (Var n) t with
        | true  -> failwith "occurence error"
        | false -> compose_ty_subst (ty_unify (ty_sub rest n t)) [(n,t)]
@@ -158,7 +158,7 @@ let rec gather_ty_constraints_pattern : pat -> ty * ty_env * ty_constraints = fu
        | [] -> (List (Var (new_ty_var ())),[],[])
        | _ -> gather_ty_constraints_pattern_list ps None [] []
      end
-  | PWild -> (Var (new_ty_var ()),[],[]
+  | PWild -> (Var (new_ty_var ()),[],[])
   | _ -> failwith "pattern_error";;
      
 let rec gather_ty_constraints : ty_env -> expr -> ty * ty_constraints = fun env e ->
@@ -214,7 +214,7 @@ let rec gather_ty_constraints : ty_env -> expr -> ty * ty_constraints = fun env 
 	 | [] -> (t',c_ans)
 	 | (pat,ex)::rest ->
 	    let (t1,env',c1) = gather_ty_constraints_pattern pat in
-	    let (t1',c1') = gather_ty_constraints (env@env') ex in
+	    let (t1',c1') = gather_ty_constraints (env'@env) ex in
 	    begin
 	      match t' with
 	      | None -> f rest t1 (Some t1') ((t,t1)::c1@c1'@c_ans)
